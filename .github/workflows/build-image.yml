@@ -1,0 +1,48 @@
+name: "Build a Docker image"
+
+# This workflow uses workload identity federation, and requires that the
+# appropriate policy binding has been set up for the calling repository. See if
+# it has with:
+#
+#     gcloud iam service-accounts get-iam-policy builder@replicate.iam.gserviceaccount.com
+#
+# Note that the calling workflow will also need to specify the
+# appropriate permissions on the job that uses this workflow, e.g.
+#
+#     build:
+#       permissions:
+#         contents: 'read'
+#         id-token: 'write'
+#       uses: replicate/workflows/.github/workflows/build-image.yml@main
+
+on:
+  workflow_call:
+    outputs:
+      image:
+        description: "The built image identifier"
+        value: ${{ jobs.build.outputs.image }}
+
+jobs:
+  build:
+    name: "Build image"
+    runs-on: ubuntu-latest-8-cores
+
+    if: ${{ github.actor != 'dependabot[bot]' && !github.event.pull_request.head.repo.fork }}
+
+    outputs:
+      image: ${{ steps.build.outputs.image }}
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v1'
+      with:
+        workload_identity_provider: 'projects/1025538909507/locations/global/workloadIdentityPools/github/providers/github-actions'
+        service_account: 'builder@replicate.iam.gserviceaccount.com'
+
+    - uses: 'google-github-actions/setup-gcloud@v1'
+
+    - name: 'Build image'
+      id: 'build'
+      run: script/build >> $GITHUB_OUTPUT
