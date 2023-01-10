@@ -38,6 +38,9 @@ on:
         required: true
         type: string
         description: "The name of the Honeycomb dataset to add a deployment marker to"
+    secrets:
+      HONEYCOMB_API_KEY:
+        required: true
 
 jobs:
   deploy:
