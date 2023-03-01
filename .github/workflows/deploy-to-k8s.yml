@@ -1,0 +1,91 @@
+name: Deploy to Kubernetes
+
+# This workflow uses workload identity federation, and requires that the
+# appropriate policy binding has been set up for the calling repository. See if
+# it has with:
+#
+#     gcloud iam service-accounts get-iam-policy deploy@replicate-production.iam.gserviceaccount.com
+#
+# Note that the calling workflow will also need to specify the
+# appropriate permissions on the job that uses this workflow, e.g.
+#
+#     deploy:
+#       permissions:
+#         contents: 'read'
+#         id-token: 'write'
+#       uses: replicate/workflows/.github/workflows/deploy-to-k8s.yml@main
+
+on:
+  workflow_call:
+    inputs:
+      cluster_name:
+        required: true
+        type: string
+        description: The name of the cluster
+      location:
+        required: true
+        type: string
+        description: The location (region or zone) of the cluster
+      project_id:
+        required: true
+        type: string
+        description: The parent GCP project ID (NOT project number) of the cluster
+      run:
+        required: true
+        type: string
+        description: The deployment command to run
+      honeycomb_dataset:
+        required: true
+        type: string
+        description: The name of the Honeycomb dataset used for the deployment marker
+      install_kustomize:
+        required: false
+        type: boolean
+        description: Whether this deployment needs the kustomize CLI to be installed
+        default: false
+    secrets:
+      HONEYCOMB_API_KEY:
+        required: true
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+
+    steps:
+      - uses: actions/checkout@master
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: projects/1025538909507/locations/global/workloadIdentityPools/github/providers/github-actions
+          service_account: deploy@replicate-production.iam.gserviceaccount.com
+
+      - name: Fetch cluster credentials
+        uses: google-github-actions/get-gke-credentials@v1
+        with:
+          cluster_name: ${{ inputs.cluster_name }}
+          location: ${{ inputs.location }}
+          project_id: ${{ inputs.project_id }}
+
+      - name: Install kustomize
+        if: ${{ inputs.install_kustomize }}
+        run: |-
+          mkdir -p "$HOME/.local/bin"
+          curl -sfL https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.0.0/kustomize_v5.0.0_linux_amd64.tar.gz | tar -zx -C "$HOME/.local/bin"
+          chmod +x "$HOME/.local/bin/kustomize"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Deploy
+        run: ${{ inputs.run }}
+
+      - name: Add marker to Honeycomb
+        run: |-
+          <<<"${{ github.event.head_commit.message }}" read -r message
+          curl "https://api.honeycomb.io/1/markers/${{ inputs.honeycomb_dataset }}" \
+            -sSL \
+            -X POST \
+            -H "X-Honeycomb-Team: ${{ secrets.HONEYCOMB_API_KEY }}" \
+            -d '{"type": "deploy", "message": "[${{ inputs.cluster_name }}] '"$message"'", "url": "${{ github.event.head_commit.url }}"}'
