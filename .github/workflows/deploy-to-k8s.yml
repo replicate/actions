@@ -54,6 +54,10 @@ jobs:
 
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
 
+    env:
+      COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+      COMMIT_URL: ${{ github.event.head_commit.url }}
+
     steps:
       - uses: actions/checkout@master
 
@@ -83,9 +87,9 @@ jobs:
 
       - name: Add marker to Honeycomb
         run: |-
-          <<<"${{ github.event.head_commit.message }}" read -r message
+          <<<"$COMMIT_MESSAGE" read -r message_first_line
           curl "https://api.honeycomb.io/1/markers/${{ inputs.honeycomb_dataset }}" \
             -sSL \
             -X POST \
             -H "X-Honeycomb-Team: ${{ secrets.HONEYCOMB_API_KEY }}" \
-            -d '{"type": "deploy", "message": "[${{ inputs.cluster_name }}] '"$message"'", "url": "${{ github.event.head_commit.url }}"}'
+            -d '{"type": "deploy", "message": "[${{ inputs.cluster_name }}] '"$message_first_line"'", "url": "'"$COMMIT_URL"'"}'
