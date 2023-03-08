@@ -78,10 +78,10 @@ jobs:
           chmod +x "$HOME/.local/bin/kustomize"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      - name: Deploy
-        run: script/deploy ${{ inputs.image }}
-
       - name: Add marker to Honeycomb
         run: |
           first_line=$(echo "${{ github.event.head_commit.message }}" | tr '\n' '\f' | sed -e 's/^\([^\f]*\).*$/\1/')
           curl https://api.honeycomb.io/1/markers/${{ inputs.honeycomb_dataset }} -X POST -H "X-Honeycomb-Team: ${{ secrets.HONEYCOMB_API_KEY }}" -d "{\"message\": \"$first_line\", \"url\": \"${{ github.event.head_commit.url }}\", \"type\": \"deploy\"}"
+
+      - name: Deploy
+        run: script/deploy ${{ inputs.image }}
