@@ -46,7 +46,7 @@ jobs:
       id-token: 'write'
 
     outputs:
-      image: ${{ fromJSON(steps.build.outputs.metadata)['image.name'] }}
+      image: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
 
     steps:
     - uses: actions/checkout@v3
@@ -79,8 +79,7 @@ jobs:
         username: 'oauth2accesstoken'
         password: '${{ steps.auth.outputs.access_token }}'
 
-    - id: build
-      name: 'Build and push'
+    - name: 'Build and push'
       uses: docker/build-push-action@v4
       with:
         push: true
