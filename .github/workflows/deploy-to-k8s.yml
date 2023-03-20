@@ -43,9 +43,15 @@ on:
         type: boolean
         description: Whether this deployment needs the kustomize CLI to be installed
         default: false
+      sentry_project:
+        required: false
+        type: string
+        description: The name of the Sentry project (used to create a Sentry release)
     secrets:
       HONEYCOMB_API_KEY:
         required: true
+      SENTRY_AUTH_TOKEN:
+        required: false
 
 jobs:
   deploy:
@@ -90,6 +96,16 @@ jobs:
             -X POST \
             -H "X-Honeycomb-Team: ${{ secrets.HONEYCOMB_API_KEY }}" \
             -d '{"type": "deploy", "message": "[${{ inputs.cluster_name }}] '"$message_first_line"'", "url": "'"$COMMIT_URL"'"}'
+
+      - name: Create Sentry release
+        uses: getsentry/action-release@v1
+        if: ${{ inputs.sentry_project }}
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: replicate
+          SENTRY_PROJECT: ${{ inputs.sentry_project }}
+        with:
+          environment: production
 
       - name: Deploy
         run: ${{ inputs.run }}
