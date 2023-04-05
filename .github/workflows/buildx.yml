@@ -16,7 +16,7 @@ name: Build and push a Docker image
 #       uses: replicate/workflows/.github/workflows/buildx.yml@main
 #       with:
 #         registry: us-docker.pkg.dev
-#         image: us-docker.pkg.dev/replicate-services-us/replicate/cluster
+#         image: us-docker.pkg.dev/replicate-production/replicate-services-us/cluster
 
 on:
   workflow_call:
