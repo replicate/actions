@@ -79,7 +79,7 @@ jobs:
       uses: docker/login-action@v2
       with:
         registry: asia-docker.pkg.dev
-        username: oauth2accesstoken'
+        username: oauth2accesstoken
         password: '${{ steps.auth.outputs.access_token }}'
 
     - name: 'Build and push'
