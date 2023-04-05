@@ -72,7 +72,7 @@ jobs:
       uses: docker/login-action@v2
       with:
         registry: us-docker.pkg.dev
-        username: oauth2accesstoken'
+        username: oauth2accesstoken
         password: '${{ steps.auth.outputs.access_token }}'
 
     - name: 'Log into Asia Artifact Registry'
