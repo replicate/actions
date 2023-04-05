@@ -41,7 +41,7 @@ jobs:
       id-token: 'write'
 
     outputs:
-      image: '${{ fromJSON(steps.meta.outputs.json).labels["org.opencontainers.image.title"] }}:${{ fromJSON(steps.meta.outputs.json).labels["org.opencontainers.image.version"] }}'
+      image: ${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.title'] }}:${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
 
     steps:
     - uses: actions/checkout@v3
