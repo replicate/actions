@@ -4,7 +4,7 @@ name: Build and push a Docker image
 # appropriate policy binding has been set up for the calling repository. See if
 # it has with:
 #
-#     gcloud iam service-accounts get-iam-policy builder@replicate.iam.gserviceaccount.com
+#     gcloud iam service-accounts get-iam-policy builder@replicate-production.iam.gserviceaccount.com
 #
 # Note that the calling workflow will also need to specify the
 # appropriate permissions on the job that uses this workflow, e.g.
@@ -15,8 +15,8 @@ name: Build and push a Docker image
 #         id-token: 'write'
 #       uses: replicate/workflows/.github/workflows/buildx.yml@main
 #       with:
-#         registry: us-central1-docker.pkg.dev
-#         image: us-central1-docker.pkg.dev/replicate/replicate-alpha/cluster
+#         registry: us-docker.pkg.dev
+#         image: us-docker.pkg.dev/replicate-services-us/replicate/cluster
 
 on:
   workflow_call:
@@ -69,7 +69,7 @@ jobs:
       uses: google-github-actions/auth@v1
       with:
         workload_identity_provider: 'projects/1025538909507/locations/global/workloadIdentityPools/github/providers/github-actions'
-        service_account: 'builder@replicate.iam.gserviceaccount.com'
+        service_account: 'builder@replicate-production.iam.gserviceaccount.com'
         token_format: 'access_token'
 
     - name: 'Log into Artifact Registry'
