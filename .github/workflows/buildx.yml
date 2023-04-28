@@ -53,6 +53,7 @@ jobs:
         images: |
           us-docker.pkg.dev/replicate-production/replicate-services-us/${{ inputs.image }}
           asia-docker.pkg.dev/replicate-production/replicate-services-asia/${{ inputs.image }}
+          699583231712.dkr.ecr.us-east-1.amazonaws.com/replicate-production/replicate-services/${{ inputs.image }}
         tags: |
           type=sha
           type=raw,value=latest,enable={{is_default_branch}},priority=0
@@ -68,6 +69,13 @@ jobs:
         service_account: 'builder@replicate-production.iam.gserviceaccount.com'
         token_format: 'access_token'
 
+    - name: 'Authenticate to AWS'
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        # the role hasn't been set up yet, this is a placeholder
+        role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
+        aws-region: us-east-1
+
     - name: 'Log into US Artifact Registry'
       uses: docker/login-action@v2
       with:
@@ -81,6 +89,9 @@ jobs:
         registry: asia-docker.pkg.dev
         username: oauth2accesstoken
         password: '${{ steps.auth.outputs.access_token }}'
+
+    - name: 'Log into Amazon ECR'
+      uses: aws-actions/amazon-ecr-login@v1
 
     - name: 'Build and push'
       uses: docker/build-push-action@v4
