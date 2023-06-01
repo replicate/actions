@@ -38,6 +38,11 @@ on:
         required: true
         type: string
         description: The name of the Honeycomb dataset used for the deployment marker
+      install_helm:
+        required: false
+        type: boolean
+        description: Whether this deployment needs helm to be installed (also installs sops and helm-secrets)
+        default: false
       install_kustomize:
         required: false
         type: boolean
@@ -79,6 +84,22 @@ jobs:
           cluster_name: ${{ inputs.cluster_name }}
           location: ${{ inputs.location }}
           project_id: ${{ inputs.project_id }}
+
+      - name: Install sops
+        if: ${{ inputs.install_helm }}
+        uses: mdgreenwald/mozilla-sops-action@1.4.1
+        with:
+          version: 'v3.7.3'
+
+      - name: Install helm
+        if: ${{ inputs.install_helm }}
+        uses: azure/setup-helm@v3
+        with:
+          version: 'v3.11.1'
+
+      - name: Install helm-secrets
+        if: ${{ inputs.install_helm }}
+        run: helm plugin install https://github.com/jkroepke/helm-secrets --version v4.4.2
 
       - name: Install kustomize
         if: ${{ inputs.install_kustomize }}
