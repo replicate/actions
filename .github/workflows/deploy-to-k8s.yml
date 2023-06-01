@@ -87,7 +87,7 @@ jobs:
 
       - name: Install sops
         if: ${{ inputs.install_helm }}
-        uses: mdgreenwald/mozilla-sops-action@1.4.1
+        uses: mdgreenwald/mozilla-sops-action@v1.4.1
         with:
           version: 'v3.7.3'
 
