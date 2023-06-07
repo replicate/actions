@@ -45,7 +45,7 @@ jobs:
         uses: azure/k8s-set-context@v3
         with:
           method: kubeconfig
-          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+          kubeconfig: ${{ secrets.COREWEAVE_KUBECONFIG }}
 
       - name: Install sops
         if: ${{ inputs.install_helm }}
