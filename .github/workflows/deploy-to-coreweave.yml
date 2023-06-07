@@ -1,0 +1,84 @@
+name: Deploy to CoreWeave
+
+on:
+  workflow_call:
+    inputs:
+      run:
+        required: true
+        type: string
+        description: The deployment command to run
+      honeycomb_dataset:
+        required: true
+        type: string
+        description: The name of the Honeycomb dataset used for the deployment marker
+      install_helm:
+        required: false
+        type: boolean
+        description: Whether this deployment needs helm to be installed (also installs sops and helm-secrets)
+        default: false
+      install_kustomize:
+        required: false
+        type: boolean
+        description: Whether this deployment needs the kustomize CLI to be installed
+        default: false
+    secrets:
+      COREWEAVE_KUBECONFIG:
+        required: true
+      HONEYCOMB_API_KEY:
+        required: true
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    if: ${{ github.event_name == 'push' && format('refs/heads/{0}', github.event.repository.default_branch) }}
+
+    env:
+      COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+      COMMIT_URL: ${{ github.event.head_commit.url }}
+
+    steps:
+      - uses: actions/checkout@master
+
+      - name: Install credentials
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+
+      - name: Install sops
+        if: ${{ inputs.install_helm }}
+        uses: mdgreenwald/mozilla-sops-action@v1.4.1
+        with:
+          version: 'v3.7.3'
+
+      - name: Install helm
+        if: ${{ inputs.install_helm }}
+        uses: azure/setup-helm@v3
+        with:
+          version: 'v3.11.1'
+
+      - name: Install helm-secrets
+        if: ${{ inputs.install_helm }}
+        run: helm plugin install https://github.com/jkroepke/helm-secrets --version v4.4.2
+
+      - name: Install kustomize
+        if: ${{ inputs.install_kustomize }}
+        run: |-
+          mkdir -p "$HOME/.local/bin"
+          curl -sfL https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.0.0/kustomize_v5.0.0_linux_amd64.tar.gz | tar -zx -C "$HOME/.local/bin"
+          chmod +x "$HOME/.local/bin/kustomize"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Add marker to Honeycomb
+        run: |-
+          <<<"$COMMIT_MESSAGE" read -r message_first_line
+          curl "https://api.honeycomb.io/1/markers/${{ inputs.honeycomb_dataset }}" \
+            -sSL \
+            -X POST \
+            -H "X-Honeycomb-Team: ${{ secrets.HONEYCOMB_API_KEY }}" \
+            -d '{"type": "deploy", "message": "[coreweave] '"$message_first_line"'", "url": "'"$COMMIT_URL"'"}'
+
+      - name: Deploy
+        run: ${{ inputs.run }}
