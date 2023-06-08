@@ -1,5 +1,20 @@
 name: Deploy to CoreWeave
 
+# If you want to use SOPS, this workflow will use workload identity federation.
+# That will require that the appropriate policy binding has been set up for the
+# calling repository. See if it has with:
+#
+#     gcloud iam service-accounts get-iam-policy deploy@replicate-production.iam.gserviceaccount.com
+#
+# Note that the calling workflow will also need to specify the appropriate
+# permissions on the job that uses this workflow, e.g.
+#
+#     deploy:
+#       permissions:
+#         contents: 'read'
+#         id-token: 'write'
+#       uses: replicate/workflows/.github/workflows/deploy-to-coreweave.yml@main
+
 on:
   workflow_call:
     inputs:
@@ -14,12 +29,17 @@ on:
       install_helm:
         required: false
         type: boolean
-        description: Whether this deployment needs helm to be installed (also installs sops and helm-secrets)
+        description: Whether this deployment needs helm to be installed (installs helm-secrets if install_sops is also specified)
         default: false
       install_kustomize:
         required: false
         type: boolean
         description: Whether this deployment needs the kustomize CLI to be installed
+        default: false
+      install_sops:
+        required: false
+        type: boolean
+        description: Whether this deployment needs SOPS to be installed
         default: false
     secrets:
       COREWEAVE_KUBECONFIG:
@@ -47,8 +67,16 @@ jobs:
           method: kubeconfig
           kubeconfig: ${{ secrets.COREWEAVE_KUBECONFIG }}
 
+      # We log into GCP for access to SOPS keys
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        if: ${{ inputs.install_sops }}
+        with:
+          workload_identity_provider: projects/1025538909507/locations/global/workloadIdentityPools/github/providers/github-actions
+          service_account: deploy@replicate-production.iam.gserviceaccount.com
+
       - name: Install sops
-        if: ${{ inputs.install_helm }}
+        if: ${{ inputs.install_sops }}
         uses: mdgreenwald/mozilla-sops-action@v1.4.1
         with:
           version: 'v3.7.3'
@@ -60,7 +88,7 @@ jobs:
           version: 'v3.11.1'
 
       - name: Install helm-secrets
-        if: ${{ inputs.install_helm }}
+        if: ${{ inputs.install_helm && inputs.install_sops }}
         run: helm plugin install https://github.com/jkroepke/helm-secrets --version v4.4.2
 
       - name: Install kustomize
