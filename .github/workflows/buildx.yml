@@ -24,6 +24,11 @@ on:
         required: true
         type: string
         description: The name of the image to push.
+      context:
+        required: false
+        type: string
+        default: "{{defaultContext}}"
+        description: The context argument to pass to docker/build-push-action.
     outputs:
       image:
         description: "The built image identifier"
@@ -87,6 +92,7 @@ jobs:
     - name: 'Build and push'
       uses: docker/build-push-action@v4
       with:
+        context: ${{ inputs.context }}
         push: true
         platforms: linux/amd64,linux/arm64
         tags: ${{ steps.meta.outputs.tags }}
