@@ -48,6 +48,11 @@ on:
         type: boolean
         description: Whether this deployment needs the kustomize CLI to be installed
         default: false
+      install_sops:
+        required: false
+        type: boolean
+        description: Whether this deployment needs SOPS to be installed
+        default: false
       sentry_project:
         required: false
         type: string
@@ -86,7 +91,7 @@ jobs:
           project_id: ${{ inputs.project_id }}
 
       - name: Install sops
-        if: ${{ inputs.install_helm }}
+        if: ${{ inputs.install_sops }}
         uses: mdgreenwald/mozilla-sops-action@v1.4.1
         with:
           version: 'v3.7.3'
@@ -98,7 +103,7 @@ jobs:
           version: 'v3.11.1'
 
       - name: Install helm-secrets
-        if: ${{ inputs.install_helm }}
+        if: ${{ inputs.install_helm && inputs.install_sops }}
         run: helm plugin install https://github.com/jkroepke/helm-secrets --version v4.4.2
 
       - name: Install kustomize
