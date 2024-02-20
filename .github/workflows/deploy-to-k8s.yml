@@ -18,6 +18,9 @@ name: Deploy to Kubernetes
 on:
   workflow_call:
     inputs:
+      target_name:
+        type: string
+        description: A display name for the current deployment target
       auth_method:
         required: true
         type: string
@@ -136,7 +139,7 @@ jobs:
           marker=$(honeymarker add \
             -d "${{inputs.honeycomb_dataset}}" \
             -t deploy \
-            -m "[${{ inputs.cluster_name }}] $message_first_line" \
+            -m "[${{inputs.target_name}}] $message_first_line" \
             -u "$COMMIT_URL")
           echo marker="$marker" >> "$GITHUB_OUTPUT"
 
