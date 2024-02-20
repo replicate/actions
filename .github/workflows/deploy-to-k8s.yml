@@ -123,7 +123,7 @@ jobs:
       - name: Install honeymarker
         run: |-
           mkdir -p "$HOME/.local/bin"
-          curl -sSL https://github.com/honeycombio/honeymarker/releases/download/v0.2.11/honeymarker-$(uname -s)-$(uname -m) -o "$HOME/.local/bin/honeymarker"
+          curl -sSL https://github.com/honeycombio/honeymarker/releases/download/v0.2.11/honeymarker-linux-amd64 -o "$HOME/.local/bin/honeymarker"
           chmod +x "$HOME/.local/bin/honeymarker"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
