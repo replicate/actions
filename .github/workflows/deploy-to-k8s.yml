@@ -129,6 +129,8 @@ jobs:
 
       - name: Add deployment marker to Honeycomb
         id: honeycomb_marker
+        env:
+          HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
         run: |-
           <<<"$COMMIT_MESSAGE" read -r message_first_line
           marker=$(honeymarker add \
@@ -142,6 +144,8 @@ jobs:
         run: ${{ inputs.run }}
 
       - name: Update deployment marker
+        env:
+          HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
         run: |-
           honeymarker update \
             -d ${{inputs.honeycomb_dataset}} \
