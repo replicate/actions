@@ -120,14 +120,30 @@ jobs:
           chmod +x "$HOME/.local/bin/kustomize"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      - name: Add marker to Honeycomb
+      - name: Install honeymarker
+        run: |-
+          mkdir -p "$HOME/.local/bin"
+          curl -sSL https://github.com/honeycombio/honeymarker/releases/download/v0.2.11/honeymarker-$(uname -s)-$(uname -m) -o "$HOME/.local/bin/honeymarker"
+          chmod +x "$HOME/.local/bin/honeymarker"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Add deployment marker to Honeycomb
+        id: honeycomb_marker
         run: |-
           <<<"$COMMIT_MESSAGE" read -r message_first_line
-          curl "https://api.honeycomb.io/1/markers/${{ inputs.honeycomb_dataset }}" \
-            -sSL \
-            -X POST \
-            -H "X-Honeycomb-Team: ${{ secrets.HONEYCOMB_API_KEY }}" \
-            -d '{"type": "deploy", "message": "[${{ inputs.cluster_name }}] '"$message_first_line"'", "url": "'"$COMMIT_URL"'"}'
+          marker=$(honeymarker add \
+            -d "${{inputs.honeycomb_dataset}}" \
+            -t deploy \
+            -m "[${{ inputs.cluster_name }}] $message_first_line" \
+            -u "$COMMIT_URL")
+          echo marker="$marker" >> "$GITHUB_OUTPUT"
 
       - name: Deploy
         run: ${{ inputs.run }}
+
+      - name: Update deployment marker
+        run: |-
+          honeymarker update \
+            -d ${{inputs.honeycomb_dataset}} \
+            -i ${{fromJSON(steps.honeycomb_marker.outputs.marker).id}} \
+            -e "$(date +%s)"
