@@ -72,7 +72,7 @@ jobs:
       COMMIT_URL: ${{ github.event.head_commit.url }}
 
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v4
 
       - name: Validate auth method
         if: ${{ inputs.auth_method != 'gke' && inputs.auth_method != 'kubeconfig' }}
