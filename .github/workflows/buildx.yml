@@ -51,12 +51,21 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Authenticate to AWS
+      uses: aws-actions/configure-aws-credentials@v3
+      with:
+        role-to-assume: arn:aws:iam::699583231712:role/GitHubBuilder
+        aws-region: us-east-1
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
     - name: 'Set Docker metadata'
       id: meta
       uses: docker/metadata-action@v5
       with:
         images: |
           us-docker.pkg.dev/replicate-production/replicate-services-us/${{ inputs.image }}
+          ${{ steps.output.registry }}/replicate-production/replicate-services/${{ inputs.image }}
         tags: |
           type=sha
           type=raw,value=latest,enable={{is_default_branch}},priority=0
