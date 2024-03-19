@@ -65,7 +65,7 @@ jobs:
       with:
         images: |
           us-docker.pkg.dev/replicate-production/replicate-services-us/${{ inputs.image }}
-          ${{ steps.output.registry }}/replicate-production/replicate-services/${{ inputs.image }}
+          ${{ steps.login-ecr.output.registry }}/replicate-production/replicate-services/${{ inputs.image }}
         tags: |
           type=sha
           type=raw,value=latest,enable={{is_default_branch}},priority=0
