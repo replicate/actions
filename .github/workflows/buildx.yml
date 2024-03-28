@@ -54,7 +54,7 @@ jobs:
     - name: Authenticate to AWS
       uses: aws-actions/configure-aws-credentials@v3
       with:
-        role-to-assume: arn:aws:iam::699583231712:role/GitHubBuilder
+        role-to-assume: arn:aws:iam::851725545228:role/GitHubBuilder
         aws-region: us-east-1
     - name: Login to Amazon ECR
       id: login-ecr
@@ -65,7 +65,7 @@ jobs:
       with:
         images: |
           us-docker.pkg.dev/replicate-production/replicate-services-us/${{ inputs.image }}
-          699583231712.dkr.ecr.us-east-1.amazonaws.com/replicate-production/replicate-services/${{ inputs.image }}
+          851725545228.dkr.ecr.us-east-1.amazonaws.com/${{ inputs.image }}
         tags: |
           type=sha
           type=raw,value=latest,enable={{is_default_branch}},priority=0
