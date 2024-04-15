@@ -56,7 +56,14 @@ on:
         type: boolean
         description: Whether this deployment needs SOPS to be installed
         default: false
+      use_heroku_api_key:
+        required: false
+        type: boolean
+        description: Whether the deployment script uses the HEROKU_API_KEY
+        default: false
     secrets:
+      HEROKU_API_KEY:
+        required: false
       HONEYCOMB_API_KEY:
         required: true
       KUBECONFIG:
@@ -162,8 +169,16 @@ jobs:
             -u "$COMMIT_URL")
           echo marker="$marker" >> "$GITHUB_OUTPUT"
 
+      - name: Expose HEROKU_API_KEY
+        if: ${{ inputs.use_heroku_api_key }}
+        run: echo "HEROKU_API_KEY=${{ secrets.HEROKU_API_KEY }}" >> "$GITHUB_ENV"
+
       - name: Deploy
         run: ${{ inputs.run }}
+
+      - name: Unexpose HEROKU_API_KEY
+        if: ${{ inputs.use_heroku_api_key }}
+        run: echo "HEROKU_API_KEY=" >> "$GITHUB_ENV"
 
       - name: Update deployment marker
         env:
