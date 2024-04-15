@@ -145,7 +145,7 @@ jobs:
         if: ${{ inputs.install_kustomize }}
         run: |-
           mkdir -p "$HOME/.local/bin"
-          curl -sfL https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.0.0/kustomize_v5.0.0_linux_amd64.tar.gz | tar -zx -C "$HOME/.local/bin"
+          curl -sfL https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.4.1/kustomize_v5.4.1_linux_amd64.tar.gz | tar -zx -C "$HOME/.local/bin"
           chmod +x "$HOME/.local/bin/kustomize"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
