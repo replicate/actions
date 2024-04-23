@@ -130,11 +130,11 @@ jobs:
       - name: Install cluster credentials (OCI)
         if: ${{ inputs.auth_method == 'oci' }}
         env:
-          OCI_CLI_USER: ${{ fromJSON(inputs.auth_params)['oci_cli_user'] }}
-          OCI_CLI_TENANCY: ${{ fromJSON(inputs.auth_params)['oci_cli_tenancy'] }}
-          OCI_CLI_FINGERPRINT: ${{ fromJSON(inputs.auth_params)['oci_cli_fingerprint'] }}
+          OCI_CLI_USER: ${{ inputs.auth_method == 'oci' && fromJSON(inputs.auth_params)['oci_cli_user'] }}
+          OCI_CLI_TENANCY: ${{ inputs.auth_method == 'oci' && fromJSON(inputs.auth_params)['oci_cli_tenancy'] }}
+          OCI_CLI_FINGERPRINT: ${{ inputs.auth_method == 'oci' && fromJSON(inputs.auth_params)['oci_cli_fingerprint'] }}
           OCI_CLI_KEY_CONTENT: ${{ secrets.OCI_CLI_KEY_CONTENT }}
-          OCI_CLI_REGION: ${{ fromJSON(inputs.auth_params)['oci_cli_region'] }}
+          OCI_CLI_REGION: ${{ inputs.auth_method == 'oci' && fromJSON(inputs.auth_params)['oci_cli_region'] }}
         uses: oracle-actions/configure-kubectl-oke@v1.3.2
         with:
           cluster: ${{ env.OKE_CLUSTER_ID }}
