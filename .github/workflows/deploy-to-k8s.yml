@@ -85,13 +85,21 @@ jobs:
       AWS_ROLE_ARN: ${{ inputs.auth_method == 'aws' && fromJSON(inputs.auth_params)['role_arn'] }}
       AWS_CLUSTER_NAME: ${{ inputs.auth_method == 'aws' && fromJSON(inputs.auth_params)['cluster_name'] }}
 
+      OCI_CLI_USER: ${{ inputs.auth_method == 'oci' && secrets.OCI_CLI_USER }}
+      OCI_CLI_TENANCY: ${{ inputs.auth_method == 'oci' && secrets.OCI_CLI_TENANCY }}
+      OCI_CLI_FINGERPRINT: ${{ inputs.auth_method == 'oci' && secrets.OCI_CLI_FINGERPRINT }}
+      OCI_CLI_KEY_CONTENT: ${{ inputs.auth_method == 'oci' && secrets.OCI_CLI_KEY_CONTENT }}
+      OCI_CLI_REGION: ${{ inputs.auth_method == 'oci' && secrets.OCI_CLI_REGION }}
+      OKE_CLUSTER_ID: ${{ inputs.auth_method == 'oci' && secrets.OKE_CLUSTER_ID }}
+
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Validate auth method
-        if: ${{ inputs.auth_method != 'aws' && inputs.auth_method != 'gke' && inputs.auth_method != 'kubeconfig' }}
+        if: ${{ inputs.auth_method != 'aws' && inputs.auth_method != 'gke' && inputs.auth_method != 'kubeconfig' && inputs.auth_method != 'oci' }}
         run: |-
-          echo "Invalid auth method: must be one of kubeconfig, aws, gke" >&2
+          echo "Invalid auth method: must be one of kubeconfig, oci, aws, gke" >&2
           exit 1
 
       - name: Authenticate to AWS
@@ -108,6 +116,12 @@ jobs:
         with:
           workload_identity_provider: projects/1025538909507/locations/global/workloadIdentityPools/github/providers/github-actions
           service_account: deploy@replicate-production.iam.gserviceaccount.com
+
+      - name: Setup Kubectl for Oracle Cloud OKE (OCI)
+        if: ${{ inputs.auth_method == 'oci' }}
+        uses: oracle-actions/configure-kubectl-oke@v1.3.2
+        with:
+          cluster: ${{ env.OKE_CLUSTER_ID }}
 
       - name: Install cluster credentials (AWS)
         if: ${{ inputs.auth_method == 'aws' }}
