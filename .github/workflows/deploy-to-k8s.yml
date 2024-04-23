@@ -69,6 +69,8 @@ on:
         description: Whether the deployment script uses the HEROKU_API_KEY
         default: false
     secrets:
+      OCI_CLI_KEY_CONTENT:
+        required: false
       HEROKU_API_KEY:
         required: false
       HONEYCOMB_API_KEY:
