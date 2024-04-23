@@ -24,7 +24,7 @@ on:
       auth_method:
         required: true
         type: string
-        description: How to authenticate to the cluster (one of "kubeconfig", "aws", "gke").
+        description: How to authenticate to the cluster (one of "kubeconfig", "oci", "aws", "gke").
       auth_params:
         type: string
         description: >
