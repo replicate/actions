@@ -38,8 +38,8 @@ on:
 
           For auth method "oci" this should be a JSON string with keys:
           `oci_cli_user`, `oci_cli_tenancy`, `oci_cli_fingerprint`,
-          `oci_cli_region`. You must also provide the secret
-          `OCI_CLI_KEY_CONTENT`.
+          `oci_cli_region`, and `oke_cluster_id`. You must also provide the
+          secret `OCI_CLI_KEY_CONTENT`.
       run:
         required: true
         type: string
@@ -137,7 +137,7 @@ jobs:
           OCI_CLI_REGION: ${{ inputs.auth_method == 'oci' && fromJSON(inputs.auth_params)['oci_cli_region'] }}
         uses: oracle-actions/configure-kubectl-oke@v1.3.2
         with:
-          cluster: ${{ env.OKE_CLUSTER_ID }}
+          cluster: ${{ inputs.auth_method == 'oci' && fromJSON(inputs.auth_params)['oke_cluster_id'] }}
 
       - name: Install cluster credentials (kubeconfig)
         if: ${{ inputs.auth_method == 'kubeconfig' }}
