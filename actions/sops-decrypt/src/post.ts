@@ -1,7 +1,6 @@
 import {
   existsSync as fsExistsSync,
   rm as fsRm,
-
 } from "node:fs";
 import { getInput, getBooleanInput, setFailed, notice } from "@actions/core";
 import { errorMessage } from "@google-github-actions/actions-utils/dist";
@@ -26,7 +25,7 @@ function deleteDirectory(deleteDestDir: boolean, destDir: string): void {
   }
   if (fsExistsSync(destDir)) {
     try {
-      fsRm(destDir, { recursive: true, force: true }, {} as any);
+      fsRm(destDir, { recursive: true, force: true }, () => {});
       notice(`Secrets output directory ${destDir} has been removed.`);
     } catch (err) {
       throw Error(`Error removing output directory ${destDir} with ${err}`);
