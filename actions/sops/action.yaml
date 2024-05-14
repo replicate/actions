@@ -1,0 +1,44 @@
+name: "SOPS Secrets Management and Cleanup"
+author: "Replicate"
+description: |-
+  This action decrypts secrets using SOPS and in the post step, cleans the decrypted secrets.
+
+inputs:
+  source_dir:
+    description: "The directory containing the encrypted secrets files"
+    required: true
+  file_pattern:
+    description: "The pattern to match the encrypted secrets files"
+    default: '.+\.env'
+    required: true
+  dest_dir:
+    description: "The directory to write the decrypted secrets files"
+    required: true
+  create_dest_dir:
+    description: "Whether to create the destination directory if it does not exist"
+    required: false
+    default: 'true'
+  delete_dest_dir:
+    description: "Whether to delete the destination directory on cleanup"
+    required: false
+    default: 'true'
+  sops_version:
+    description: "The version of SOPS to use"
+    required: true
+    default: 'v3.7.3'
+runs:
+  using: composite
+  steps:
+    - name: "Install SOPS"
+      uses: mdgreenwald/mozilla-sops-action@v1.5.0
+      with:
+        version: ${{ inputs.sops_version }}
+    - name: "Decrypt SOPS Files"
+      uses: replicate/actions/actions/sops-decrypt@main
+      with:
+        source_dir: ${{ inputs.source_dir }}
+        file_pattern: ${{ inputs.file_pattern }}
+        dest_dir: ${{ inputs.dest_dir }}
+        create_dest_dir: ${{ inputs.create_dest_dir }}
+        delete_dest_dir: ${{ inputs.delete_dest_dir }}
+
