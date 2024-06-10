@@ -36,10 +36,6 @@ on:
           For auth_method "gke" this should be a JSON string representing the
           inputs to google-github-actions/get-gke-credentials.
 
-          For auth method "oci" this should be a JSON string with keys:
-          `oci_cli_user`, `oci_cli_tenancy`, `oci_cli_fingerprint`,
-          `oci_cli_region`, and `oke_cluster_id`. You must also provide the
-          secret `OCI_CLI_KEY_CONTENT`.
       run:
         required: true
         type: string
@@ -69,8 +65,6 @@ on:
         description: Whether the deployment script uses the HEROKU_API_KEY
         default: false
     secrets:
-      OCI_CLI_KEY_CONTENT:
-        required: false
       HEROKU_API_KEY:
         required: false
       HONEYCOMB_API_KEY:
@@ -94,18 +88,13 @@ jobs:
       AWS_ROLE_ARN: ${{ inputs.auth_method == 'aws' && fromJSON(inputs.auth_params)['role_arn'] }}
       AWS_CLUSTER_NAME: ${{ inputs.auth_method == 'aws' && fromJSON(inputs.auth_params)['cluster_name'] }}
 
-      OCI_CLI_USER: ${{ inputs.auth_method == 'oci' && fromJSON(inputs.auth_params)['oci_cli_user'] }}
-      OCI_CLI_TENANCY: ${{ inputs.auth_method == 'oci' && fromJSON(inputs.auth_params)['oci_cli_tenancy'] }}
-      OCI_CLI_FINGERPRINT: ${{ inputs.auth_method == 'oci' && fromJSON(inputs.auth_params)['oci_cli_fingerprint'] }}
-      OCI_CLI_KEY_CONTENT: ${{ secrets.OCI_CLI_KEY_CONTENT }}
-      OCI_CLI_REGION: ${{ inputs.auth_method == 'oci' && fromJSON(inputs.auth_params)['oci_cli_region'] }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Validate auth method
-        if: ${{ ! contains(fromJSON('["kubeconfig", "aws", "gke", "oci"]'), inputs.auth_method) }}
+        if: ${{ ! contains(fromJSON('["kubeconfig", "aws", "gke"]'), inputs.auth_method) }}
         run: |-
-          echo "Invalid auth method: must be one of kubeconfig, aws, gke, oci" >&2
+          echo "Invalid auth method: must be one of kubeconfig, aws, gke" >&2
           exit 1
 
       - name: Authenticate to AWS
@@ -131,12 +120,6 @@ jobs:
         if: ${{ inputs.auth_method == 'gke' }}
         uses: google-github-actions/get-gke-credentials@v2
         with: ${{ fromJSON(inputs.auth_params) }}
-
-      - name: Install cluster credentials (OCI)
-        if: ${{ inputs.auth_method == 'oci' }}
-        uses: oracle-actions/configure-kubectl-oke@v1.3.2
-        with:
-          cluster: ${{ inputs.auth_method == 'oci' && fromJSON(inputs.auth_params)['oke_cluster_id'] }}
 
       - name: Install cluster credentials (kubeconfig)
         if: ${{ inputs.auth_method == 'kubeconfig' }}
