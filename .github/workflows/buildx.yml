@@ -57,8 +57,9 @@ jobs:
         role-to-assume: arn:aws:iam::851725545228:role/GitHubBuilder
         aws-region: us-east-1
     - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v2
+      run: |
+        aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 851725545228.dkr.ecr.us-east-1.amazonaws.com
+        aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 851725545228.dkr.ecr.us-west-2.amazonaws.com
     - name: 'Set Docker metadata'
       id: meta
       uses: docker/metadata-action@v5
