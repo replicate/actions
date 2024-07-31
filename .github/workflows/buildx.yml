@@ -39,7 +39,7 @@ jobs:
     name: Build and push
     runs-on: ubuntu-latest-8-cores
 
-    if: ${{ github.actor != 'dependabot[bot]' && !github.event.pull_request.head.repo.fork }}
+    if: github.ref == 'refs/heads/main'
 
     permissions:
       contents: 'read'
