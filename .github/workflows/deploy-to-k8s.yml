@@ -18,6 +18,12 @@ name: Deploy to Kubernetes
 on:
   workflow_call:
     inputs:
+      dryrun:
+        type: string
+        description: |
+          If set, a command to run to dry-run a deployment.  This will be run on PRs only.
+        required: false
+        default: ""
       target_name:
         type: string
         description: A display name for the current deployment target
@@ -65,12 +71,16 @@ on:
       KUBECONFIG:
         required: false
 
+env:
+  SHOULD_DEPLOY: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'push') && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) && 'yes' || '' }}
+
 jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
 
-    if: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'push') && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) }}
+    # this is ${{ inputs.dryrun || env.SHOULD_DEPLOY }}, but the `env` context isn't available here
+    if: ${{ inputs.dryrun || (github.event_name == 'workflow_dispatch' || github.event_name == 'push') && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) }}
 
     env:
       COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
@@ -165,7 +175,12 @@ jobs:
             -u "$COMMIT_URL")
           echo marker="$marker" >> "$GITHUB_OUTPUT"
 
+      - name: Dry run
+        if: ${{ inputs.dryrun && !env.SHOULD_DEPLOY }}
+        run: ${{ inputs.dryrun }}
+
       - name: Deploy
+        if: ${{ env.SHOULD_DEPLOY }}
         run: ${{ inputs.run }}
 
       - name: Update deployment marker
