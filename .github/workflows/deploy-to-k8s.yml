@@ -184,6 +184,7 @@ jobs:
         run: ${{ inputs.run }}
 
       - name: Update deployment marker
+        if: ${{ env.SHOULD_DEPLOY }}
         env:
           HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
         run: |-
