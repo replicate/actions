@@ -30,7 +30,7 @@ on:
       auth_method:
         required: true
         type: string
-        description: How to authenticate to the cluster (one of "kubeconfig", "aws", "gke", "oci").
+        description: How to authenticate to the cluster (one of "kubeconfig", "aws", "gke").
       auth_params:
         type: string
         description: >
@@ -42,6 +42,8 @@ on:
           For auth_method "gke" this should be a JSON string representing the
           inputs to google-github-actions/get-gke-credentials.
 
+          For auth_method "kubeconfig" this should the _name_ of a secret passed
+          to the workflow which contains the kubeconfig file data.
       run:
         required: true
         type: string
@@ -68,8 +70,6 @@ on:
     secrets:
       HONEYCOMB_API_KEY:
         required: true
-      KUBECONFIG:
-        required: false
 
 env:
   SHOULD_DEPLOY: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'push') && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) && 'yes' || '' }}
@@ -129,7 +129,7 @@ jobs:
         uses: azure/k8s-set-context@v4.0.0
         with:
           method: kubeconfig
-          kubeconfig: ${{ secrets.KUBECONFIG }}
+          kubeconfig: ${{ secrets[inputs.auth_params] }}
 
       - name: Install sops
         if: ${{ inputs.install_sops }}
