@@ -156,6 +156,7 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Install honeymarker
+        if: ${{ env.SHOULD_DEPLOY }}
         run: |-
           mkdir -p "$HOME/.local/bin"
           curl -sSL https://github.com/honeycombio/honeymarker/releases/download/v0.2.11/honeymarker-linux-amd64 -o "$HOME/.local/bin/honeymarker"
@@ -164,6 +165,7 @@ jobs:
 
       - name: Add deployment marker to Honeycomb
         id: honeycomb_marker
+        if: ${{ env.SHOULD_DEPLOY }}
         env:
           HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
         run: |-
