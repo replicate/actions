@@ -121,7 +121,7 @@ jobs:
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          tags: tag:k8s-deploy
+          tags: tag:ci-github-k8s-deploy
 
       - name: Install cluster credentials (AWS)
         if: ${{ inputs.auth_method == 'aws' }}
