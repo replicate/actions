@@ -121,8 +121,8 @@ jobs:
         if: ${{ inputs.auth_method == 'tailscale' }}
         uses: tailscale/github-action@v2
         with:
-          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          oauth-client-id: ${{ secrets.TS_DEPLOY_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_DEPLOY_OAUTH_SECRET }}
           tags: tag:ci-github-k8s-deploy
 
       - name: Install cluster credentials (AWS)
