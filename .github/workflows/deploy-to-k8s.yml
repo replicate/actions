@@ -115,6 +115,14 @@ jobs:
           workload_identity_provider: projects/1025538909507/locations/global/workloadIdentityPools/github/providers/github-actions
           service_account: deploy@replicate-production.iam.gserviceaccount.com
 
+      - name: Setup tailscale
+        if: ${{ inputs.auth_method == 'tailscale' }}
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:k8s-deploy
+
       - name: Install cluster credentials (AWS)
         if: ${{ inputs.auth_method == 'aws' }}
         run: aws eks update-kubeconfig --name ${{ env.AWS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
@@ -130,6 +138,10 @@ jobs:
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets[inputs.auth_params] }}
+
+      - name: Install cluster credentials (tailscale)
+        if: ${{ inputs.auth_method == 'tailscale' }}
+        run: tailscale configure kubeconfig tailscale-operator-${{ inputs.auth_params }}
 
       - name: Install sops
         if: ${{ inputs.install_sops }}
