@@ -30,7 +30,7 @@ on:
       auth_method:
         required: true
         type: string
-        description: How to authenticate to the cluster (one of "kubeconfig", "aws", "gke").
+        description: How to authenticate to the cluster (one of "kubeconfig", "aws", "gke", "tailscale").
       auth_params:
         type: string
         description: >
@@ -44,6 +44,8 @@ on:
 
           For auth_method "kubeconfig" this should the _name_ of a secret passed
           to the workflow which contains the kubeconfig file data.
+
+          For auth_method "tailscale" this is ignored.
       run:
         required: true
         type: string
