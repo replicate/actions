@@ -141,7 +141,7 @@ jobs:
 
       - name: Install cluster credentials (tailscale)
         if: ${{ inputs.auth_method == 'tailscale' }}
-        run: tailscale configure kubeconfig tailscale-operator-${{ inputs.auth_params }}
+        run: tailscale configure kubeconfig tailscale-operator-${{ inputs.target_name }}
 
       - name: Install sops
         if: ${{ inputs.install_sops }}
