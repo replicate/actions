@@ -119,7 +119,7 @@ jobs:
 
       - name: Setup tailscale
         if: ${{ inputs.auth_method == 'tailscale' }}
-        uses: tailscale/github-action@v2
+        uses: tailscale/github-action@main
         with:
           oauth-client-id: ${{ secrets.TS_DEPLOY_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_DEPLOY_OAUTH_SECRET }}
@@ -129,7 +129,7 @@ jobs:
         if: ${{ inputs.auth_method == 'tailscale' }}
         run: tailscale version
 
-      - name: Show tailscale status
+      - name: Show Tailscale Status
         if: ${{ inputs.auth_method == 'tailscale' }}
         run: tailscale status
 
