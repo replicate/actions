@@ -97,9 +97,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Validate auth method
-        if: ${{ ! contains(fromJSON('["kubeconfig", "aws", "gke"]'), inputs.auth_method) }}
+        if: ${{ ! contains(fromJSON('["kubeconfig","aws","gke","tailscale"]'), inputs.auth_method) }}
         run: |-
-          echo "Invalid auth method: must be one of kubeconfig, aws, gke" >&2
+          echo "Invalid auth method: must be one of kubeconfig, aws, gke, tailscale" >&2
           exit 1
 
       - name: Authenticate to AWS
