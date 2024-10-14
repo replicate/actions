@@ -29,6 +29,11 @@ on:
         type: string
         default: "{{defaultContext}}"
         description: The context argument to pass to docker/build-push-action.
+      platforms:
+        required: false
+        type: string
+        default: linux/amd64,linux/arm64
+        description: The platforms to build the docker image against.
     outputs:
       image:
         description: "The built image identifier"
@@ -99,7 +104,7 @@ jobs:
       with:
         context: ${{ inputs.context }}
         push: true
-        platforms: linux/amd64,linux/arm64
+        platforms: ${{ inputs.platforms }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha,scope=${{ inputs.image }}
