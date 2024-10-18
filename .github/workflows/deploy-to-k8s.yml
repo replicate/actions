@@ -117,7 +117,7 @@ jobs:
           workload_identity_provider: projects/1025538909507/locations/global/workloadIdentityPools/github/providers/github-actions
           service_account: deploy@replicate-production.iam.gserviceaccount.com
 
-      - name: Setup tailscale
+      - name: Authenticate to Tailscale
         if: ${{ inputs.auth_method == 'tailscale' }}
         uses: tailscale/github-action@main
         with:
@@ -125,13 +125,17 @@ jobs:
           oauth-secret: ${{ secrets.TS_DEPLOY_OAUTH_SECRET }}
           tags: tag:ci-github-k8s-deploy
 
-      - name: Show Tailscale Version
+      - name: Tailscale version
         if: ${{ inputs.auth_method == 'tailscale' }}
         run: tailscale version
 
-      - name: Show Tailscale Status
+      - name: Tailscale status
         if: ${{ inputs.auth_method == 'tailscale' }}
         run: tailscale status
+
+      - name: Tailscale ping
+        if: ${{ inputs.auth_method == 'tailscale' && fromJSON(inputs.auth_params).ping != null }}
+        run: tailscale ping ${{ fromJSON(inputs.auth_params).ping }}
 
       - name: Install cluster credentials (AWS)
         if: ${{ inputs.auth_method == 'aws' }}
