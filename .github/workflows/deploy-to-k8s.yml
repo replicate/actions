@@ -134,8 +134,9 @@ jobs:
         run: tailscale status
 
       - name: Tailscale ping
-        if: ${{ inputs.auth_method == 'tailscale' && fromJSON(inputs.auth_params).ping != null }}
-        run: tailscale ping ${{ fromJSON(inputs.auth_params).ping }}
+        if: ${{ inputs.auth_method == 'tailscale' && inputs.auth_params != '' && fromJSON(inputs.auth_params).ping != null }}
+        run: |-
+          tailscale ping -c 5 ${{ fromJSON(inputs.auth_params).ping }} || :
 
       - name: Install cluster credentials (AWS)
         if: ${{ inputs.auth_method == 'aws' }}
