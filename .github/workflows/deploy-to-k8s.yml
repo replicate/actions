@@ -149,7 +149,7 @@ jobs:
 
       - name: Install cluster credentials (kubeconfig)
         if: ${{ inputs.auth_method == 'kubeconfig' }}
-        uses: azure/k8s-set-context@v4.0.0
+        uses: azure/k8s-set-context@v4.0.1
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets[inputs.auth_params] }}
