@@ -34,6 +34,11 @@ on:
         type: string
         default: linux/amd64,linux/arm64
         description: The platforms to build the docker image against.
+      fetch-depth:
+        required: false
+        type: number
+        default: 1
+        description: The fetch depth passed to actions/checkout.
     outputs:
       image:
         description: "The built image identifier"
@@ -55,6 +60,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: ${{ inputs.fetch-depth }}
 
     - name: Authenticate to AWS
       uses: aws-actions/configure-aws-credentials@v4
