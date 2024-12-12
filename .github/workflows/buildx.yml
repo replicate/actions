@@ -44,6 +44,11 @@ on:
         type: number
         default: 1
         description: The fetch depth passed to actions/checkout.
+      file:
+        required: false
+        type: string
+        default: '{{defaultContext}}/Dockerfile'
+        description: Dockerfile 'file' argument passed to docker/build-push-action.
     outputs:
       image:
         description: "The built image identifier"
@@ -115,6 +120,7 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: ${{ inputs.context }}
+        file: ${{ inputs.file }}
         push: true
         platforms: ${{ inputs.platforms }}
         tags: ${{ steps.meta.outputs.tags }}
