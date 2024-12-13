@@ -46,6 +46,8 @@ on:
         description: The fetch depth passed to actions/checkout.
       file:
         required: false
+        type: string
+        default: ''
         description: Path to the Dockerfile passed to docker/build-push-action.
     outputs:
       image:
