@@ -49,6 +49,11 @@ on:
         type: string
         default: ''
         description: Path to the Dockerfile passed to docker/build-push-action.
+      enable-go-build-cache:
+        required: false
+        type: boolean
+        default: false
+        description: Whether to add a GitHub Actions cache instance at /root/.cache/go-build
     outputs:
       image:
         description: "The built image identifier"
@@ -116,6 +121,29 @@ jobs:
         username: oauth2accesstoken
         password: '${{ steps.auth.outputs.access_token }}'
 
+    - name: "Create go build cache"
+      uses: actions/cache@v3
+      id: go-build-cache
+      if: ${{ inputs.enable-go-build-cache }}
+      with:
+        path: |
+          go-build-cache
+          go-mod-cache
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+    - name: 'Inject go build cache into docker'
+      uses: reproducible-containers/buildkit-cache-dance@v3.1.2
+      if: ${{ inputs.enable-go-build-cache }}
+      with:
+        cache-map: |
+          {
+            "go-build-cache": "/root/.cache/go-build",
+            "go-mod": "/root/go/pkg/mod"
+          }
+        # Only save the cache from the main branch. Not worth saving build cache from PR builds.
+        skip-extraction: |
+          ${{ steps.go-build-cache.outputs.cache-hit || github.ref != format('refs/heads/{0}', github.event.repository.default_branch) }}
     - name: 'Build and push'
       uses: docker/build-push-action@v5
       with:
