@@ -85,8 +85,9 @@ jobs:
         aws-region: us-east-1
     - name: Login to Amazon ECR
       run: |
-        aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 851725545228.dkr.ecr.us-east-1.amazonaws.com
-        aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 851725545228.dkr.ecr.us-west-2.amazonaws.com
+        aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 851725545228.dkr.ecr.us-east-1.amazonaws.com &
+        aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 851725545228.dkr.ecr.us-west-2.amazonaws.com &
+        wait
     - name: 'Set Docker metadata'
       id: meta
       uses: docker/metadata-action@v5
