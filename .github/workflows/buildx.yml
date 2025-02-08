@@ -20,25 +20,21 @@ name: Build and push a Docker image
 on:
   workflow_call:
     inputs:
-      image:
-        required: true
-        type: string
-        description: The name of the image to push.
-      context:
-        required: false
-        type: string
-        default: "{{defaultContext}}"
-        description: The context argument to pass to docker/build-push-action.
-      platforms:
-        required: false
-        type: string
-        default: linux/amd64,linux/arm64
-        description: The platforms to build the docker image against.
       build-args:
         required: false
         type: string
         default: ''
         description: Additional build-args argument passed to docker/build-push-action.
+      context:
+        required: false
+        type: string
+        default: "{{defaultContext}}"
+        description: The context argument to pass to docker/build-push-action.
+      enable-go-build-cache:
+        required: false
+        type: boolean
+        default: false
+        description: Whether to add a GitHub Actions cache instance at /root/.cache/go-build
       fetch-depth:
         required: false
         type: number
@@ -49,11 +45,20 @@ on:
         type: string
         default: ''
         description: Path to the Dockerfile passed to docker/build-push-action.
-      enable-go-build-cache:
+      image:
+        required: true
+        type: string
+        description: The name of the image to push.
+      platforms:
         required: false
-        type: boolean
-        default: false
-        description: Whether to add a GitHub Actions cache instance at /root/.cache/go-build
+        type: string
+        default: linux/amd64,linux/arm64
+        description: The platforms to build the docker image against.
+      timeout-minutes:
+        required: false
+        type: number
+        default: 30
+        description: The timeout in minutes for the entire job.
     outputs:
       image:
         description: "The built image identifier"
@@ -63,6 +68,7 @@ jobs:
   build:
     name: Build and push
     runs-on: ubuntu-latest-8-cores
+    timeout-minutes: ${{ inputs.timeout-minutes }}
 
     if: ${{ github.actor != 'dependabot[bot]' && !github.event.pull_request.head.repo.fork }}
 
@@ -83,10 +89,12 @@ jobs:
       with:
         role-to-assume: arn:aws:iam::851725545228:role/GitHubBuilder
         aws-region: us-east-1
+
     - name: Login to Amazon ECR
       run: |
         aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 851725545228.dkr.ecr.us-east-1.amazonaws.com
         aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 851725545228.dkr.ecr.us-west-2.amazonaws.com
+
     - name: 'Set Docker metadata'
       id: meta
       uses: docker/metadata-action@v5
@@ -132,6 +140,7 @@ jobs:
         key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
         restore-keys: |
           ${{ runner.os }}-go-
+
     - name: 'Inject go build cache into docker'
       uses: reproducible-containers/buildkit-cache-dance@v3.1.2
       if: ${{ inputs.enable-go-build-cache }}
@@ -144,6 +153,7 @@ jobs:
         # Only save the cache from the main branch. Not worth saving build cache from PR builds.
         skip-extraction: |
           ${{ steps.go-build-cache.outputs.cache-hit || github.ref != format('refs/heads/{0}', github.event.repository.default_branch) }}
+
     - name: 'Build and push'
       uses: docker/build-push-action@v5
       with:
