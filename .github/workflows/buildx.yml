@@ -130,7 +130,7 @@ jobs:
         password: '${{ steps.auth.outputs.access_token }}'
 
     - name: "Create go build cache"
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       id: go-build-cache
       if: ${{ inputs.enable-go-build-cache }}
       with:
