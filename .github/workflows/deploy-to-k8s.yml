@@ -125,6 +125,7 @@ jobs:
           oauth-secret: ${{ secrets.TS_DEPLOY_OAUTH_SECRET }}
           tags: tag:ci-github-k8s-deploy
           version: latest
+          use-cache: 'true'
 
       - name: Tailscale version
         if: ${{ inputs.auth_method == 'tailscale' }}
