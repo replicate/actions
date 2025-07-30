@@ -156,6 +156,10 @@ jobs:
           method: kubeconfig
           kubeconfig: ${{ secrets[inputs.auth_params] }}
 
+      - name: Set tailscale operator name
+        if: ${{ inputs.auth_method == 'tailscale' }}
+        run: sudo tailscale set --operator=$USER
+
       - name: Install cluster credentials (tailscale)
         if: ${{ inputs.auth_method == 'tailscale' }}
         run: tailscale configure kubeconfig tailscale-operator-${{ inputs.target_name }}
