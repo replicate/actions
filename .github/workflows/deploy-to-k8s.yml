@@ -94,7 +94,7 @@ jobs:
       AWS_CLUSTER_NAME: ${{ inputs.auth_method == 'aws' && fromJSON(inputs.auth_params)['cluster_name'] }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Validate auth method
         if: ${{ ! contains(fromJSON('["kubeconfig","aws","gke","tailscale"]'), inputs.auth_method) }}
