@@ -196,7 +196,7 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Validate Honeycomb API key
-        if: ${{ inputs.mark_deployment && env.HAS_HONEYCOMB_API_KEY == "no"  }}
+        if: ${{ inputs.mark_deployment && env.HAS_HONEYCOMB_API_KEY == 'no'  }}
         run: |-
           echo "secrets.HONEYCOMB_API_KEY must be set unless inputs.mark_deployment is false" >&2
           exit 1
