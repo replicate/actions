@@ -69,9 +69,14 @@ on:
         type: boolean
         description: Whether this deployment needs SOPS to be installed
         default: false
+      mark_deployment:
+        required: false
+        type: boolean
+        description: Whether this deployment should be marked with honeymarker
+        default: true
     secrets:
       HONEYCOMB_API_KEY:
-        required: true
+        required: false
 
 env:
   SHOULD_DEPLOY: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'push') && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) && 'yes' || '' }}
@@ -92,6 +97,8 @@ jobs:
       AWS_ROLE_SESSION_NAME: ${{ inputs.auth_method == 'aws' && fromJSON(inputs.auth_params)['role_session_name'] }}
       AWS_ROLE_ARN: ${{ inputs.auth_method == 'aws' && fromJSON(inputs.auth_params)['role_arn'] }}
       AWS_CLUSTER_NAME: ${{ inputs.auth_method == 'aws' && fromJSON(inputs.auth_params)['cluster_name'] }}
+
+      HAS_HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY != '' && 'yes' || 'no' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -188,8 +195,14 @@ jobs:
           chmod +x "$HOME/.local/bin/kustomize"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
+      - name: Validate Honeycomb API key
+        if: ${{ inputs.mark_deployment && env.HAS_HONEYCOMB_API_KEY == "no"  }}
+        run: |-
+          echo "secrets.HONEYCOMB_API_KEY must be set unless inputs.mark_deployment is false" >&2
+          exit 1
+
       - name: Install honeymarker
-        if: ${{ env.SHOULD_DEPLOY }}
+        if: ${{ env.SHOULD_DEPLOY && inputs.mark_deployment }}
         run: |-
           mkdir -p "$HOME/.local/bin"
           curl -sSL https://github.com/honeycombio/honeymarker/releases/download/v0.2.11/honeymarker-linux-amd64 -o "$HOME/.local/bin/honeymarker"
@@ -198,7 +211,7 @@ jobs:
 
       - name: Add deployment marker to Honeycomb
         id: honeycomb_marker
-        if: ${{ env.SHOULD_DEPLOY }}
+        if: ${{ env.SHOULD_DEPLOY && inputs.mark_deployment }}
         env:
           HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
         run: |-
