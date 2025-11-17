@@ -110,7 +110,7 @@ jobs:
           exit 1
 
       - name: Authenticate to AWS
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         if: ${{ inputs.auth_method == 'aws' }}
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
