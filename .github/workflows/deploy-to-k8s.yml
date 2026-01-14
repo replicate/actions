@@ -47,9 +47,9 @@ on:
 
           For auth_method "tailscale" this is ignored.
 
-          For auth_method "cf" this should be a JSON string with keys:
-          `cluster` (name like "coreweave-ric2") and optionally `hostname` (defaults
-          to derived hostname like "k8sapi.ric2.c.r8admin.com").
+          For auth_method "cf" this should be a JSON string with optional keys:
+          `cluster` (name like "coreweave-ric2", defaults to target_name) and
+          `hostname` (defaults to derived hostname like "k8sapi.ric2.c.r8admin.com").
       run:
         required: true
         type: string
@@ -188,8 +188,8 @@ jobs:
       - name: Configure cluster credentials (cf)
         if: ${{ inputs.auth_method == 'cf' }}
         env:
-          R8_CF_KUBE_CLUSTER: ${{ fromJSON(inputs.auth_params).cluster }}
-          R8_CF_KUBE_HOSTNAME: ${{ fromJSON(inputs.auth_params).hostname || '' }}
+          R8_CF_KUBE_CLUSTER: ${{ (inputs.auth_params != '' && fromJSON(inputs.auth_params).cluster) || inputs.target_name }}
+          R8_CF_KUBE_HOSTNAME: ${{ inputs.auth_params != '' && fromJSON(inputs.auth_params).hostname || '' }}
         run: r8-cf-kube gha
 
       - name: Install sops
