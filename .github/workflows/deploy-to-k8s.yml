@@ -193,6 +193,8 @@ jobs:
         env:
           R8_CF_KUBE_CLUSTER: ${{ (inputs.auth_params != '' && fromJSON(inputs.auth_params).cluster) || inputs.target_name }}
           R8_CF_KUBE_HOSTNAME: ${{ inputs.auth_params != '' && fromJSON(inputs.auth_params).hostname || '' }}
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID_K8S }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET_K8S }}
         run: r8-cf-kube gha
 
       - name: Install sops
