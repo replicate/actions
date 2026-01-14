@@ -79,6 +79,9 @@ on:
         description: Whether this deployment should be marked with honeymarker
         default: true
     secrets:
+      CF_ACCESS_KUBE_TOKEN:
+        required: false
+        description: Token for downloading releases from cf-access-kube (internal repo)
       HONEYCOMB_API_KEY:
         required: false
 
@@ -178,7 +181,7 @@ jobs:
       - name: Install r8-cf-kube CLI
         if: ${{ inputs.auth_method == 'cf' }}
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.CF_ACCESS_KUBE_TOKEN || github.token }}
         run: |-
           gh release download --repo replicate/cf-access-kube --pattern 'install.sh' --clobber
           bash install.sh
