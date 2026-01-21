@@ -85,7 +85,7 @@ jobs:
         fetch-depth: ${{ inputs.fetch-depth }}
 
     - name: Authenticate to AWS
-      uses: aws-actions/configure-aws-credentials@v4
+      uses: aws-actions/configure-aws-credentials@v5
       with:
         role-to-assume: arn:aws:iam::851725545228:role/GitHubBuilder
         aws-region: us-east-1
