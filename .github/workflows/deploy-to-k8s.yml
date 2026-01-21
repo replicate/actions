@@ -30,7 +30,7 @@ on:
       auth_method:
         required: true
         type: string
-        description: How to authenticate to the cluster (one of "kubeconfig", "aws", "gke", "tailscale", "cf").
+        description: How to authenticate to the cluster (one of "kubeconfig", "aws", "gke", "cf").
       auth_params:
         type: string
         description: >
@@ -44,8 +44,6 @@ on:
 
           For auth_method "kubeconfig" this should the _name_ of a secret passed
           to the workflow which contains the kubeconfig file data.
-
-          For auth_method "tailscale" this is ignored.
 
           For auth_method "cf" this should be a JSON string with optional keys:
           `cluster` (name like "coreweave-ric2", defaults to target_name) and
@@ -111,9 +109,9 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Validate auth method
-        if: ${{ ! contains(fromJSON('["kubeconfig","aws","gke","tailscale","cf"]'), inputs.auth_method) }}
+        if: ${{ ! contains(fromJSON('["kubeconfig","aws","gke","cf"]'), inputs.auth_method) }}
         run: |-
-          echo "Invalid auth method: must be one of kubeconfig, aws, gke, tailscale, cf" >&2
+          echo "Invalid auth method: must be one of kubeconfig, aws, gke, cf" >&2
           exit 1
 
       - name: Authenticate to AWS
@@ -131,29 +129,6 @@ jobs:
           workload_identity_provider: projects/1025538909507/locations/global/workloadIdentityPools/github/providers/github-actions
           service_account: deploy@replicate-production.iam.gserviceaccount.com
 
-      - name: Authenticate to Tailscale
-        if: ${{ inputs.auth_method == 'tailscale' }}
-        uses: tailscale/github-action@main
-        with:
-          oauth-client-id: ${{ secrets.TS_DEPLOY_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TS_DEPLOY_OAUTH_SECRET }}
-          tags: tag:ci-github-k8s-deploy
-          version: latest
-          use-cache: 'true'
-
-      - name: Tailscale version
-        if: ${{ inputs.auth_method == 'tailscale' }}
-        run: tailscale version
-
-      - name: Tailscale status
-        if: ${{ inputs.auth_method == 'tailscale' }}
-        run: tailscale status
-
-      - name: Tailscale ping
-        if: ${{ inputs.auth_method == 'tailscale' && inputs.auth_params != '' && fromJSON(inputs.auth_params).ping != null }}
-        run: |-
-          tailscale ping -c 5 ${{ fromJSON(inputs.auth_params).ping }} || :
-
       - name: Install cluster credentials (AWS)
         if: ${{ inputs.auth_method == 'aws' }}
         run: aws eks update-kubeconfig --name ${{ env.AWS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }} --alias ${{ inputs.target_name }}
@@ -169,14 +144,6 @@ jobs:
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets[inputs.auth_params] }}
-
-      - name: Set tailscale operator name
-        if: ${{ inputs.auth_method == 'tailscale' }}
-        run: sudo tailscale set --operator=$USER
-
-      - name: Install cluster credentials (tailscale)
-        if: ${{ inputs.auth_method == 'tailscale' }}
-        run: tailscale configure kubeconfig tailscale-operator-${{ inputs.target_name }}
 
       - name: Install r8-cf-kube CLI
         if: ${{ inputs.auth_method == 'cf' }}
