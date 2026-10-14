@@ -145,7 +145,7 @@ jobs:
           method: kubeconfig
           kubeconfig: ${{ secrets[inputs.auth_params] }}
 
-      - name: Install r8-cf-kube CLI
+      - name: Install cf-access-kube CLI
         if: ${{ inputs.auth_method == 'cf' }}
         env:
           GH_TOKEN: ${{ secrets.CF_ACCESS_KUBE_TOKEN || github.token }}
@@ -153,7 +153,7 @@ jobs:
           gh release download --repo replicate/cf-access-kube --pattern 'install.sh' --clobber
           bash install.sh
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          "$HOME/.local/bin/r8-cf-kube" version
+          "$HOME/.local/bin/cf-access-kube" version
 
       - name: Configure cluster credentials (cf)
         if: ${{ inputs.auth_method == 'cf' }}
@@ -162,7 +162,7 @@ jobs:
           R8_CF_KUBE_HOSTNAME: ${{ inputs.auth_params != '' && fromJSON(inputs.auth_params).hostname || '' }}
           CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID_K8S }}
           CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET_K8S }}
-        run: r8-cf-kube gha
+        run: cf-access-kube gha
 
       - name: Install sops
         if: ${{ inputs.install_sops }}
