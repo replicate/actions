@@ -1,0 +1,19 @@
+.github/workflows/ldw.yml
+  s_60516144ffb938::t_d5b9622ad2276a 1-23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0d31cd54006894e2e565fd66fcede4125ca97ec4",
+  "prompts": {},
+  "sessions": {
+    "s_60516144ffb938": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "01a13add-b868-765b-9c56-2af53bfe1e0f",
+        "model": "auto-beta"
+      },
+      "human_author": "Dan Buch <dbuch@cloudflare.com>"
+    }
+  }
+}
