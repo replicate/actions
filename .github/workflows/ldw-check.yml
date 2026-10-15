@@ -1,0 +1,74 @@
+name: Limited deployment window check
+
+# Fails while a limited deployment window is active, so that a required status check can
+# hold merges back. A maintainer can bypass an active window by commenting
+# `/ldw-bypass` on its own line on the pull request and re-running this job.
+#
+# The status comes from https://ldw-check.r8admin.com, which this workflow
+# authenticates to with a GitHub OIDC token. The calling repository must be
+# registered with that service, and the calling job must grant the permissions
+# below, e.g.
+#
+#     ldw:
+#       permissions:
+#         contents: read
+#         id-token: write
+#         pull-requests: read
+#       uses: replicate/actions/.github/workflows/ldw-check.yml@main
+#
+# This workflow fails closed: if the status cannot be determined, the check
+# fails, and a bypass comment does not hide that failure.
+#
+# It covers pull requests targeting, and pushes to, the default branch. A push is
+# traced back to the single merged pull request that produced it, so a squash
+# merge inherits the bypass given on that pull request.
+
+on:
+  workflow_call:
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: read
+    env:
+      LDW_CHECK_SHA256: ab5673d6038cd2794629ff188532f34e7ffe4d9b51752d8c4c4b9adb6fffa0e9
+    steps:
+      - name: Check for an active limited deployment window
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          REPO_PRIVATE: ${{ github.event.repository.private }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          REF: ${{ github.ref }}
+          SHA: ${{ github.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          readonly AUDIENCE='https://ldw-check.r8admin.com/'
+          SCRIPT="${RUNNER_TEMP}/ldw-check.bash"
+          if [[ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]]; then
+            MESSAGE='No OIDC token is available. The calling job needs id-token: write;'
+            MESSAGE+=' pull requests from forks never get one.'
+            echo "::error title=Limited deployment window::${MESSAGE}"
+            exit 1
+          fi
+          TOKEN="$(
+            printf 'header = "Authorization: Bearer %s"\n' "${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" |
+              curl --fail --silent --show-error --max-time 20 --config - --get \
+                --data-urlencode "audience=${AUDIENCE}" "${ACTIONS_ID_TOKEN_REQUEST_URL}" |
+              jq -er '.value'
+          )"
+          echo "::add-mask::${TOKEN}"
+          printf 'header = "Authorization: Bearer gha:%s"\n' "${TOKEN}" |
+            curl --fail --silent --show-error --max-time 30 --retry 3 --config - \
+              --output "${SCRIPT}" "${AUDIENCE}gha/${LDW_CHECK_SHA256}"
+          echo "${LDW_CHECK_SHA256}  ${SCRIPT}" | sha256sum --check --status
+          LDW_CHECK_OIDC_TOKEN="${TOKEN}" bash "${SCRIPT}"

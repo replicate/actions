@@ -1,0 +1,23 @@
+name: Limited deployment window
+
+# Runs the shared limited deployment window check on this repository itself. Changes
+# here during a limited deployment window are risky, so this workflow stays in place.
+# Whether the check is required is up to this repository's branch rules.
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions: {}
+
+jobs:
+  ldw:
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: read
+    uses: ./.github/workflows/ldw-check.yml
