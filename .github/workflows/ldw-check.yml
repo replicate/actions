@@ -19,9 +19,35 @@ name: Limited deployment window check
 # This workflow fails closed: if the status cannot be determined, the check
 # fails, and a bypass comment does not hide that failure.
 #
-# It covers pull requests targeting, and pushes to, the default branch. A push is
-# traced back to the single merged pull request that produced it, so a squash
-# merge inherits the bypass given on that pull request.
+# It covers pull requests targeting the default branch, and pushes and manual
+# dispatches on it.
+#
+#   Pull request   Bypassed by the /ldw-bypass comment above.
+#   Push           Traced back to the single merged pull request that produced the
+#                  commit, so a squash merge inherits the bypass given on that pull
+#                  request. A commit that is not exactly one merged pull request (a
+#                  direct push, say) cannot be bypassed.
+#   Dispatch       There is no pull request, so the person running the workflow bypasses
+#                  an active window by entering their own GitHub username in an
+#                  `ldw_bypass` input. The calling workflow must declare it:
+#
+#                      on:
+#                        workflow_dispatch:
+#                          inputs:
+#                            ldw_bypass:
+#                              description: >-
+#                                Only while a limited deployment window is active: enter
+#                                your own GitHub username to deploy anyway.
+#                              required: false
+#                              type: string
+#
+#                  It is read from the event payload, so it is not passed down. It is
+#                  compared with github.triggering_actor, not github.actor: a re-run
+#                  by someone else keeps the original input but not the original
+#                  person, so it does not carry the first person's acknowledgment.
+#
+# deploy-to-k8s.yml calls this workflow before a real deployment, so a deployment
+# cannot start while a window is active unless it has such a bypass.
 
 on:
   workflow_call:
@@ -36,7 +62,7 @@ jobs:
       id-token: write
       pull-requests: read
     env:
-      LDW_CHECK_SHA256: ab5673d6038cd2794629ff188532f34e7ffe4d9b51752d8c4c4b9adb6fffa0e9
+      LDW_CHECK_SHA256: 931e7926fd09a8bf9eef442b75e47e7bc2ba1d57b51b73b51e0a84ae41b745ee
     steps:
       - name: Check for an active limited deployment window
         shell: bash
@@ -50,6 +76,10 @@ jobs:
           REF: ${{ github.ref }}
           SHA: ${{ github.sha }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          ACTOR: ${{ github.triggering_actor }}
+          # NOTE: Free text from the person running the workflow. It is only ever passed
+          # as an environment variable, never interpolated into the script.
+          DISPATCH_ACK: ${{ github.event.inputs.ldw_bypass }}
         run: |
           set -euo pipefail
           readonly AUDIENCE='https://ldw-check.r8admin.com/'

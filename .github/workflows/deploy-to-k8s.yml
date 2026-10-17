@@ -13,7 +13,19 @@ name: Deploy to Kubernetes
 #       permissions:
 #         contents: 'read'
 #         id-token: 'write'
+#         pull-requests: 'read'
 #       uses: replicate/workflows/.github/workflows/deploy-to-k8s.yml@main
+#
+# A real deployment (a push or manual dispatch on the default branch) first runs the
+# limited deployment window check, ldw-check.yml, and only deploys if it passes. The
+# check needs `pull-requests: read` to find a bypass comment. A called workflow cannot
+# be granted more token permissions than its caller has, so a caller without it fails to
+# start at all, rather than skipping the check. Dry runs on pull requests are not gated.
+#
+# A caller that can be started with workflow_dispatch should also declare an
+# `ldw_bypass` input, which is how a manual run gets past an active window. Without it,
+# a manual run is blocked for as long as a window is active. See ldw-check.yml for the
+# input and for what the check does.
 
 on:
   workflow_call:
@@ -87,12 +99,46 @@ env:
   SHOULD_DEPLOY: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'push') && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) && 'yes' || '' }}
 
 jobs:
+  # Holds a real deployment back while a limited deployment window is active. A push
+  # inherits the bypass given on the pull request that produced it; a manual dispatch
+  # has no pull request, so it needs the `ldw_bypass` input instead.
+  ldw-check:
+    name: Limited deployment window
+    # NOTE: This is SHOULD_DEPLOY, repeated because the `env` context isn't available
+    # here. Keep it identical to the real-deployment condition in the `deploy` job.
+    if: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'push') && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) }}
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: read
+    uses: replicate/actions/.github/workflows/ldw-check.yml@main
+
   deploy:
     name: Deploy
     runs-on: ubuntu-latest-4-cores
+    needs: ldw-check
 
-    # this is ${{ inputs.dryrun || env.SHOULD_DEPLOY }}, but the `env` context isn't available here
-    if: ${{ inputs.dryrun || (github.event_name == 'workflow_dispatch' || github.event_name == 'push') && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) }}
+    # NOTE: Read this condition as three parts, where "real deployment" is a push or
+    # manual dispatch on the default branch (SHOULD_DEPLOY, but the `env` context isn't
+    # available here):
+    #
+    #   !cancelled()
+    #       Without a status check function, a skipped `ldw-check` job (every pull request
+    #       dry run) would skip this job too.
+    #   inputs.dryrun || real deployment
+    #       As before: run for a dry run, or for a real deployment.
+    #   ldw-check succeeded || not a real deployment
+    #       A real deployment needs the check to have passed. A skipped, failed or
+    #       cancelled check never deploys.
+    if: >-
+      ${{ !cancelled()
+      && (inputs.dryrun
+      || ((github.event_name == 'workflow_dispatch' || github.event_name == 'push')
+      && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch))))
+      && (needs.ldw-check.result == 'success'
+      || !((github.event_name == 'workflow_dispatch' || github.event_name == 'push')
+      && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch))))
+      }}
 
     env:
       COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
