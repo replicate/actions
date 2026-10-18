@@ -135,7 +135,7 @@ jobs:
 
       - name: Install cluster credentials (GKE)
         if: ${{ inputs.auth_method == 'gke' }}
-        uses: google-github-actions/get-gke-credentials@v2
+        uses: google-github-actions/get-gke-credentials@v3
         with: ${{ fromJSON(inputs.auth_params) }}
 
       - name: Install cluster credentials (kubeconfig)
