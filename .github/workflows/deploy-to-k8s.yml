@@ -106,7 +106,7 @@ jobs:
       HAS_HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY != '' && 'yes' || 'no' }}
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Validate auth method
         if: ${{ ! contains(fromJSON('["kubeconfig","aws","gke","cf"]'), inputs.auth_method) }}

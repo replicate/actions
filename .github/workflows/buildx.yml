@@ -80,7 +80,7 @@ jobs:
       image: ${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.title'] }}:${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         fetch-depth: ${{ inputs.fetch-depth }}
 
