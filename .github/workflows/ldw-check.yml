@@ -1,8 +1,10 @@
 name: Limited deployment window check
 
 # Fails while a limited deployment window is active, so that a required status check can
-# hold merges back. A maintainer can bypass an active window by commenting
-# `/ldw-bypass` on its own line on the pull request and re-running this job.
+# hold merges back. Someone with write access to the repository can bypass an active
+# window by commenting `/ldw-bypass` on its own line on the pull request and re-running
+# this job. Their permission on the repository decides, not their organization role, so
+# private organization membership does not stop it working.
 #
 # The status comes from https://ldw-check.r8admin.com, which this workflow
 # authenticates to with a GitHub OIDC token. The calling repository must be
@@ -62,7 +64,7 @@ jobs:
       id-token: write
       pull-requests: read
     env:
-      LDW_CHECK_SHA256: 931e7926fd09a8bf9eef442b75e47e7bc2ba1d57b51b73b51e0a84ae41b745ee
+      LDW_CHECK_SHA256: 0ac54e25698de4000909eba95de63048a8c9361e19e8ff1cbd637962654dc6eb
     steps:
       - name: Check for an active limited deployment window
         shell: bash
