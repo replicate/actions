@@ -63,6 +63,20 @@ on:
       image:
         description: "The built image identifier"
         value: ${{ jobs.build.outputs.image }}
+      # NOTE: `image` stays `<title>:<version>` (tag only) so callers that split or
+      # rewrite it keep working. `fqimage` (fully qualified image) is the same
+      # reference plus the digest the build pushed: `<title>:<version>@sha256:<hex>`.
+      # Deploying `fqimage` means a later retag or rebuild of the tag cannot change
+      # what runs. Callers prefix the registry exactly as they do for `image`.
+      fqimage:
+        description: >-
+          The built image reference with the digest, name:tag@sha256:hash,
+          without the registry host (callers prefix the registry exactly as they
+          do for `image`)
+        value: ${{ jobs.build.outputs.fqimage }}
+      digest:
+        description: "The digest of the pushed image (sha256:hash)"
+        value: ${{ jobs.build.outputs.digest }}
 
 jobs:
   build:
@@ -78,6 +92,11 @@ jobs:
 
     outputs:
       image: ${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.title'] }}:${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
+      # NOTE: One build-push-action step pushes every tag to GAR and both ECR
+      # regions, so all three registries hold this one digest. `fqimage` is empty
+      # (not a trailing `@`) if the step reported no digest.
+      fqimage: ${{ steps.build.outputs.digest && format('{0}:{1}@{2}', fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.title'], fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'], steps.build.outputs.digest) }}
+      digest: ${{ steps.build.outputs.digest }}
 
     steps:
     - uses: actions/checkout@v5
@@ -155,6 +174,7 @@ jobs:
           ${{ steps.go-build-cache.outputs.cache-hit || github.ref != format('refs/heads/{0}', github.event.repository.default_branch) }}
 
     - name: 'Build and push'
+      id: build
       uses: docker/build-push-action@v6
       with:
         context: ${{ inputs.context }}
@@ -168,3 +188,16 @@ jobs:
         build-args: |
           COMMIT_SHA=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.revision'] }}
           ${{ inputs.build-args }}
+
+    # NOTE: Some images are deployed by hand. Showing the fully qualified reference here
+    # gives that person the exact string to paste.
+    - name: 'Summarize fully qualified image'
+      if: ${{ steps.build.outputs.digest }}
+      env:
+        FQIMAGE: ${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.title'] }}:${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}@${{ steps.build.outputs.digest }}
+      run: |
+        {
+          echo "Pushed image, fully qualified with its digest:"
+          echo
+          echo "    $FQIMAGE"
+        } >> "$GITHUB_STEP_SUMMARY"
